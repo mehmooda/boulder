@@ -18,6 +18,7 @@ import (
 	"github.com/letsencrypt/boulder/core"
 	blog "github.com/letsencrypt/boulder/log"
 	"github.com/letsencrypt/boulder/rpc"
+	"github.com/letsencrypt/boulder/sa"
 )
 
 type config struct {
@@ -31,13 +32,13 @@ var (
 	regOrphan    = regexp.MustCompile(`regID=\[(\d+)\]`)
 )
 
-func checkDER(sa core.StorageAuthority, der []byte) error {
+func checkDER(sai core.StorageAuthority, der []byte) error {
 	cert, err := x509.ParseCertificate(der)
 	if err != nil {
 		return fmt.Errorf("Failed to parse DER: %s", err)
 	}
-	_, err = sa.GetCertificate(core.SerialToString(cert.SerialNumber))
-	if err != nil && !strings.HasPrefix(err.Error(), "Certificate does not exist for ") {
+	_, err = sai.GetCertificate(core.SerialToString(cert.SerialNumber))
+	if err != nil && err != sa.ErrCertNotFound {
 		return fmt.Errorf("Existing certificate lookup failed: %s", err)
 	}
 	return nil
@@ -59,7 +60,7 @@ func parseLogLine(sa core.StorageAuthority, logger *blog.AuditLogger, line strin
 	}
 	err = checkDER(sa, der)
 	if err != nil {
-		logger.Err(fmt.Sprintf("%s, [%s]", err.Error(), line))
+		logger.Err(fmt.Sprintf("%s, [%s]", err, line))
 		return true, false
 	}
 	// extract the regID
