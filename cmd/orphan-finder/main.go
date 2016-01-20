@@ -20,6 +20,12 @@ import (
 	"github.com/letsencrypt/boulder/rpc"
 )
 
+type config struct {
+	AMQP   cmd.AMQPConfig
+	Statsd cmd.StatsdConfig
+	Syslog cmd.SyslogConfig
+}
+
 var (
 	b64derOrphan = regexp.MustCompile(`b64der=\[([a-zA-Z0-9+/]+)\]`)
 	regOrphan    = regexp.MustCompile(`regID=\[(\d+)\]`)
@@ -78,11 +84,11 @@ func parseLogLine(sa core.StorageAuthority, logger *blog.AuditLogger, line strin
 func setup(c *cli.Context) (statsd.Statter, *blog.AuditLogger, *rpc.StorageAuthorityClient) {
 	configJSON, err := ioutil.ReadFile(c.GlobalString("config"))
 	cmd.FailOnError(err, "Failed to read config file")
-	var config cmd.Config
-	err = json.Unmarshal(configJSON, &config)
+	var conf config
+	err = json.Unmarshal(configJSON, &conf)
 	cmd.FailOnError(err, "Failed to parse config file")
-	stats, logger := cmd.StatsAndLogging(config.Statsd, config.Syslog)
-	sa, err := rpc.NewStorageAuthorityClient("orphan-finder", config.OrphanFinder.AMQP, stats)
+	stats, logger := cmd.StatsAndLogging(conf.Statsd, conf.Syslog)
+	sa, err := rpc.NewStorageAuthorityClient("orphan-finder", &conf.AMQP, stats)
 	cmd.FailOnError(err, "Failed to create SA client")
 	return stats, logger, sa
 }

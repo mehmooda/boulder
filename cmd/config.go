@@ -191,10 +191,6 @@ type Config struct {
 	AllowedSigningAlgos *AllowedSigningAlgos
 
 	SubscriberAgreementURL string
-
-	OrphanFinder struct {
-		AMQP *AMQPConfig
-	}
 }
 
 // AllowedSigningAlgos defines which algorithms be used for keys that we will
