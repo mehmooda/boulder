@@ -37,13 +37,13 @@ func checkDER(sai core.StorageAuthority, der []byte) error {
 		return fmt.Errorf("Failed to parse DER: %s", err)
 	}
 	_, err = sai.GetCertificate(core.SerialToString(cert.SerialNumber))
-	if err != nil {
-		if _, ok := err.(core.NotFoundError); ok {
-			return nil
-		}
-		return fmt.Errorf("Existing certificate lookup failed: %s", err)
+	if err == nil {
+		return fmt.Errorf("Existing certificate found with serial %s", core.SerialToString(cert.SerialNumber))
 	}
-	return nil
+	if _, ok := err.(core.NotFoundError); ok {
+		return nil
+	}
+	return fmt.Errorf("Existing certificate lookup failed: %s", err)
 }
 
 func parseLogLine(sa core.StorageAuthority, logger *blog.AuditLogger, line string) (found bool, added bool) {
