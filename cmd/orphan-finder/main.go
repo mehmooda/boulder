@@ -18,7 +18,6 @@ import (
 	"github.com/letsencrypt/boulder/core"
 	blog "github.com/letsencrypt/boulder/log"
 	"github.com/letsencrypt/boulder/rpc"
-	"github.com/letsencrypt/boulder/sa"
 )
 
 type config struct {
@@ -38,7 +37,10 @@ func checkDER(sai core.StorageAuthority, der []byte) error {
 		return fmt.Errorf("Failed to parse DER: %s", err)
 	}
 	_, err = sai.GetCertificate(core.SerialToString(cert.SerialNumber))
-	if err != nil && err != sa.ErrCertNotFound {
+	if err != nil {
+		if _, ok := err.(core.NotFoundError); ok {
+			return nil
+		}
 		return fmt.Errorf("Existing certificate lookup failed: %s", err)
 	}
 	return nil

@@ -372,10 +372,6 @@ func (ssa *SQLStorageAuthority) countCertificatesByName(domain string, earliest,
 	return len(serialMap), nil
 }
 
-// ErrCertNotFound is used to tell other services that
-// a certificate coud not be found for the serial provided
-var ErrCertNotFound = errors.New("Certificate was not found")
-
 // GetCertificate takes a serial number and returns the corresponding
 // certificate, or error if it does not exist.
 func (ssa *SQLStorageAuthority) GetCertificate(serial string) (core.Certificate, error) {
@@ -390,7 +386,7 @@ func (ssa *SQLStorageAuthority) GetCertificate(serial string) (core.Certificate,
 	}
 	if certObj == nil {
 		ssa.log.Debug(fmt.Sprintf("Nil cert for %s", serial))
-		return core.Certificate{}, ErrCertNotFound
+		return core.Certificate{}, core.NotFoundError(fmt.Sprintf("No certificate found for %s", serial))
 	}
 
 	certPtr, ok := certObj.(*core.Certificate)
